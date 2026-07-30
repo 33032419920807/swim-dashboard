@@ -233,10 +233,10 @@
   <h1>🏊 游泳成绩工作台</h1>
   <p>泳姿 · 距离 · 用时 | 多人成绩追踪 · 个人成绩对比</p>
   <div class="mobile-access">
-    <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://cdf6429aeb3bdbc7-39-182-27-232.serveousercontent.com/swim-dashboard.html" alt="手机扫码访问" />
+    <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://33032419920807.github.io/swim-dashboard/" alt="手机扫码访问" />
     <div class="info">
       <div>📱 手机扫码访问（公网 · 无需同 WiFi）</div>
-      <div class="url">https://cdf6429aeb3bdbc7-39-182-27-232.serveousercontent.com/swim-dashboard.html</div>
+      <div class="url">https://33032419920807.github.io/swim-dashboard/</div>
       <div class="hint">首次打开会有安全提示页，点击「Continue to Site」即可进入 | 永久链接部署中 → Gitee Pages</div>
       <button class="copy-btn" onclick="copyMobileUrl()">📋 复制链接</button>
     </div>
@@ -422,7 +422,7 @@ function getSwimmer(id) { return data.swimmers.find(s => s.id === id); }
 // ==================== Toast ====================
 let toastTimer;
 function copyMobileUrl() {
-  const url = 'https://cdf6429aeb3bdbc7-39-182-27-232.serveousercontent.com/swim-dashboard.html';
+  const url = 'https://33032419920807.github.io/swim-dashboard/';
   navigator.clipboard.writeText(url).then(() => {
     showToast('链接已复制，发送到手机即可打开', 'success');
   }).catch(() => {
