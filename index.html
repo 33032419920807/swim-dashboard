@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏊 游泳成绩工作台</title>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --primary: #1a73e8;
+    --accent: #0d9488;
+    --danger: #e53935;
+    --improve: #059669;
+    --regress: #dc2626;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #06b6d4 100%);
+    color: #fff;
+    padding: 24px 32px;
+    box-shadow: 0 4px 12px rgba(30,64,175,.2);
+  }
+  .header h1 { font-size: 26px; font-weight: 700; }
+  .header p { opacity: .85; margin-top: 4px; font-size: 14px; }
+
+  .tabs {
+    display: flex; gap: 0; background: #fff;
+    border-bottom: 1px solid var(--border); padding: 0 24px; overflow-x: auto;
+  }
+  .tab {
+    padding: 14px 24px; font-size: 15px; font-weight: 500; color: var(--text-muted);
+    cursor: pointer; border: none; background: none; border-bottom: 3px solid transparent;
+    transition: all .2s; white-space: nowrap;
+  }
+  .tab:hover { color: var(--primary); }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card {
+    background: var(--card); border-radius: var(--radius); padding: 24px;
+    box-shadow: var(--shadow); margin-bottom: 20px;
+  }
+  .card h3 { font-size: 17px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 5px; }
+  input, select {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 14px; font-family: inherit;
+    transition: border-color .2s; background: #fafbfc;
+  }
+  input:focus, select:focus {
+    outline: none; border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26,115,232,.12); background: #fff;
+  }
+  .form-row { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-end; }
+  .form-row > * { flex: 1; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 20px; border: none; border-radius: 8px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all .2s; font-family: inherit;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: #1557b0; }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-accent:hover { background: #0f766e; }
+  .btn-danger { background: #fef2f2; color: var(--danger); }
+  .btn-danger:hover { background: #fee2e2; }
+  .btn-sm { padding: 6px 12px; font-size: 13px; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th {
+    background: #f8fafc; padding: 10px 12px; text-align: left;
+    font-size: 12px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: .5px; border-bottom: 2px solid var(--border);
+  }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: #f8fafc; }
+
+  .rank { font-weight: 700; }
+  .rank-1 { color: #f59e0b; }
+  .rank-2 { color: #94a3b8; }
+  .rank-3 { color: #d97706; }
+
+  .time-cell {
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    font-weight: 700; font-size: 15px; color: #1e40af;
+  }
+  .best-time { color: var(--accent); font-weight: 700; }
+
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .tag-freestyle { background: #dbeafe; color: #1e40af; }
+  .tag-breaststroke { background: #fce7f3; color: #9d174d; }
+  .tag-backstroke { background: #d1fae5; color: #065f46; }
+  .tag-butterfly { background: #fef3c7; color: #92400e; }
+  .tag-medley { background: #ede9fe; color: #5b21b6; }
+  .tag-male { background: #dbeafe; color: #1e40af; }
+  .tag-female { background: #fce7f3; color: #9d174d; }
+
+.empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+.mobile-access {
+  display: flex; align-items: center; gap: 16px;
+  background: linear-gradient(135deg, #e0f2fe, #ccfbf1);
+  border: 1px solid #99f6e4; border-radius: var(--radius); padding: 12px 20px; margin-top: 14px;
+}
+.mobile-access .qr-img { width: 80px; height: 80px; border-radius: 8px; background: #fff; padding: 4px; }
+.mobile-access .info { font-size: 13px; color: var(--text); }
+.mobile-access .info .url { font-family: monospace; font-weight: 700; color: var(--primary); font-size: 14px; word-break: break-all; }
+.mobile-access .info .hint { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+.mobile-access .info .copy-btn { margin-top: 6px; padding: 4px 14px; font-size: 12px; cursor: pointer; background: var(--primary); color: #fff; border: none; border-radius: 16px; }
+.mobile-access .info .copy-btn:active { opacity: 0.85; }
+
+  .stat-cards {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px; margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--card); border-radius: var(--radius);
+    padding: 20px; box-shadow: var(--shadow); text-align: center;
+  }
+  .stat-card .number { font-size: 32px; font-weight: 800; color: var(--primary); }
+  .stat-card .label { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+  .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-bar select { width: auto; min-width: 140px; }
+
+  .swimmer-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;
+  }
+  .swimmer-card {
+    background: var(--card); border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--shadow); border-left: 4px solid var(--primary);
+    transition: transform .15s;
+  }
+  .swimmer-card:hover { transform: translateY(-2px); }
+  .swimmer-card .name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .swimmer-card .meta { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; }
+  .swimmer-card .stats { display: flex; gap: 16px; font-size: 13px; }
+  .swimmer-card .stat-val { font-weight: 700; font-size: 16px; color: var(--primary); }
+  .swimmer-card .actions { margin-top: 14px; display: flex; gap: 8px; }
+
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: #1f2937; color: #fff; padding: 12px 20px;
+    border-radius: 8px; font-size: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.2);
+    transform: translateY(100px); opacity: 0;
+    transition: all .3s; z-index: 1000;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { background: #059669; }
+  .toast.warn { background: #d97706; }
+
+  /* ===== Compare Panel ===== */
+  .compare-swimmer-card {
+    background: var(--card); border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .compare-swimmer-card h4 {
+    margin-bottom: 4px; font-size: 16px;
+  }
+  .compare-group {
+    margin-bottom: 20px;
+    border-left: 3px solid var(--primary);
+    padding-left: 16px;
+  }
+  .compare-group h5 {
+    font-size: 14px; color: var(--accent); margin-bottom: 8px;
+  }
+  .compare-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 0; border-bottom: 1px dashed var(--border);
+    font-size: 14px;
+  }
+  .compare-row .date-col { min-width: 90px; color: var(--text-muted); }
+  .compare-row .time-col { font-family: "JetBrains Mono","Fira Code",monospace; font-weight: 700; color: #1e40af; font-size: 15px; }
+  .compare-row .delta-col { min-width: 70px; font-weight: 600; font-size: 13px; }
+  .delta-improve { color: var(--improve); }
+  .delta-regress { color: var(--regress); }
+  .delta-same { color: var(--text-muted); }
+
+  .improve-bar {
+    flex: 1; height: 6px; background: #e5e7eb; border-radius: 3px;
+    position: relative; overflow: hidden; min-width: 60px;
+  }
+  .improve-bar .fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--improve), #34d399);
+    transition: width .5s;
+  }
+
+  .summary-row {
+    display: flex; gap: 24px; flex-wrap: wrap; margin-top: 8px;
+  }
+  .summary-item {
+    text-align: center; padding: 8px 16px;
+    background: #f0fdf4; border-radius: 8px;
+  }
+  .summary-item .val { font-size: 18px; font-weight: 800; color: var(--improve); }
+  .summary-item .lbl { font-size: 11px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏊 游泳成绩工作台</h1>
+  <p>泳姿 · 距离 · 用时 | 多人成绩追踪 · 个人成绩对比</p>
+  <div class="mobile-access">
+    <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://cdf6429aeb3bdbc7-39-182-27-232.serveousercontent.com/swim-dashboard.html" alt="手机扫码访问" />
+    <div class="info">
+      <div>📱 手机扫码访问（公网 · 无需同 WiFi）</div>
+      <div class="url">https://cdf6429aeb3bdbc7-39-182-27-232.serveousercontent.com/swim-dashboard.html</div>
+      <div class="hint">首次打开会有安全提示页，点击「Continue to Site」即可进入 | 永久链接部署中 → Gitee Pages</div>
+      <button class="copy-btn" onclick="copyMobileUrl()">📋 复制链接</button>
+    </div>
+  </div>
+</div>
+
+<div class="tabs" id="tabBar">
+  <button class="tab active" data-panel="panel-records">📋 成绩记录</button>
+  <button class="tab" data-panel="panel-add">➕ 录入成绩</button>
+  <button class="tab" data-panel="panel-swimmers">👥 运动员</button>
+  <button class="tab" data-panel="panel-compare">📊 成绩对比</button>
+</div>
+
+<div class="main">
+
+  <!-- ======================== Panel: Records ======================== -->
+  <div class="panel active" id="panel-records">
+    <div class="stat-cards" id="summaryStats"></div>
+    <div class="card">
+      <h3>📋 全部成绩记录</h3>
+      <div class="filter-bar">
+        <select id="filterSwimmer" onchange="renderRecords()">
+          <option value="">全部运动员</option>
+        </select>
+        <select id="filterStroke" onchange="renderRecords()">
+          <option value="">全部泳姿</option>
+          <option value="freestyle">自由泳</option>
+          <option value="breaststroke">蛙泳</option>
+          <option value="backstroke">仰泳</option>
+          <option value="butterfly">蝶泳</option>
+          <option value="medley">混合泳</option>
+        </select>
+        <select id="filterDistance" onchange="renderRecords()">
+          <option value="">全部距离</option>
+          <option value="50m">50米</option>
+          <option value="100m">100米</option>
+          <option value="200m">200米</option>
+          <option value="400m">400米</option>
+          <option value="800m">800米</option>
+          <option value="1500m">1500米</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table id="recordsTable">
+          <thead>
+            <tr>
+              <th>运动员</th><th>泳姿</th><th>距离</th><th>成绩</th><th>日期</th><th>备注</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="recordsBody">
+            <tr><td colspan="7"><div class="empty-state"><div class="icon">🏊‍♂️</div><p>暂无成绩记录，点击"录入成绩"开始吧</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== Panel: Add ======================== -->
+  <div class="panel" id="panel-add">
+    <div class="grid-2">
+      <div class="card">
+        <h3>👤 添加运动员</h3>
+        <div class="form-row">
+          <div><label>姓名</label><input type="text" id="swimmerName" placeholder="输入姓名"></div>
+        </div>
+        <div class="form-row">
+          <div><label>性别</label><select id="swimmerGender"><option value="male">男</option><option value="female">女</option></select></div>
+          <div><label>年龄组</label><select id="swimmerAgeGroup"><option value="少儿">少儿 (&lt;12)</option><option value="少年">少年 (12-14)</option><option value="青年" selected>青年 (15-17)</option><option value="成年">成年 (18+)</option><option value="大师">大师 (35+)</option></select></div>
+        </div>
+        <button class="btn btn-primary" onclick="addSwimmer()">✅ 添加运动员</button>
+      </div>
+
+      <div class="card">
+        <h3>⏱️ 录入成绩</h3>
+        <div class="form-row">
+          <div><label>运动员</label><select id="recordSwimmer"><option value="">-- 请先添加运动员 --</option></select></div>
+        </div>
+        <div class="form-row">
+          <div><label>泳姿</label><select id="recordStroke"><option value="freestyle">自由泳</option><option value="breaststroke">蛙泳</option><option value="backstroke">仰泳</option><option value="butterfly">蝶泳</option><option value="medley">混合泳</option></select></div>
+          <div><label>距离</label><select id="recordDistance"><option value="50m">50米</option><option value="100m" selected>100米</option><option value="200m">200米</option><option value="400m">400米</option><option value="800m">800米</option><option value="1500m">1500米</option></select></div>
+        </div>
+        <div class="form-row">
+          <div><label>成绩（分:秒.毫秒）</label><input type="text" id="recordTime" placeholder="例如: 1:23.45"></div>
+        </div>
+        <div class="form-row">
+          <div><label>日期</label><input type="date" id="recordDate"></div>
+          <div><label>备注（可选）</label><input type="text" id="recordNote" placeholder="训练/比赛记录等"></div>
+        </div>
+        <button class="btn btn-accent" onclick="addRecord()">📊 录入成绩</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== Panel: Swimmers ======================== -->
+  <div class="panel" id="panel-swimmers">
+    <div class="card">
+      <h3>👥 运动员名单</h3>
+      <div class="swimmer-grid" id="swimmerGrid">
+        <div class="empty-state"><div class="icon">👤</div><p>还没有添加运动员</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== Panel: Compare ======================== -->
+  <div class="panel" id="panel-compare">
+    <div class="card">
+      <h3>📊 个人成绩对比</h3>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">选择一个运动员，查看其在各项目上的历次成绩变化趋势</p>
+      <div class="filter-bar">
+        <select id="compareSwimmer" onchange="renderCompare()">
+          <option value="">-- 请选择运动员 --</option>
+        </select>
+        <select id="compareStroke" onchange="renderCompare()">
+          <option value="">全部泳姿</option>
+          <option value="freestyle">自由泳</option>
+          <option value="breaststroke">蛙泳</option>
+          <option value="backstroke">仰泳</option>
+          <option value="butterfly">蝶泳</option>
+          <option value="medley">混合泳</option>
+        </select>
+      </div>
+      <div id="compareContent">
+        <div class="empty-state"><div class="icon">📊</div><p>请选择运动员查看成绩对比</p></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==================== Data Store ====================
+const STORAGE_KEY = 'swim_dashboard_data_v2';
+
+function loadData() {
+  try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) return JSON.parse(raw); } catch (e) {}
+  return { swimmers: [], records: [] };
+}
+
+function saveData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+// Migrate old data
+function migrate() {
+  const oldRaw = localStorage.getItem('swim_dashboard_data');
+  if (oldRaw && !localStorage.getItem(STORAGE_KEY)) {
+    try {
+      const old = JSON.parse(oldRaw);
+      data = { swimmers: old.swimmers || [], records: (old.records || []).map(r => ({ id: r.id, swimmerId: r.swimmerId, stroke: r.stroke, distance: r.distance, timeSec: r.timeSec, timeDisplay: r.timeDisplay, date: r.date, note: r.note, createdAt: r.createdAt })) };
+      saveData(data);
+    } catch(e) {}
+  }
+}
+
+let data = loadData();
+migrate();
+let nextSwimmerId = data.swimmers.length > 0 ? Math.max(...data.swimmers.map(s => s.id)) + 1 : 1;
+let nextRecordId = data.records.length > 0 ? Math.max(...data.records.map(r => r.id)) + 1 : 1;
+
+// ==================== Helpers ====================
+function timeToSeconds(timeStr) {
+  const parts = timeStr.split(':');
+  if (parts.length === 2) return parseInt(parts[0]) * 60 + parseFloat(parts[1]);
+  return parseFloat(timeStr);
+}
+
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = (seconds % 60).toFixed(2);
+  if (mins > 0) return `${mins}:${secs.padStart(5, '0')}`;
+  return secs;
+}
+
+function getStrokeLabel(s) {
+  const map = { freestyle: '自由泳', breaststroke: '蛙泳', backstroke: '仰泳', butterfly: '蝶泳', medley: '混合泳' };
+  return map[s] || s;
+}
+
+function getStrokeClass(s) { return `tag-${s}`; }
+function getGenderLabel(g) { return g === 'male' ? '男' : '女'; }
+function getSwimmer(id) { return data.swimmers.find(s => s.id === id); }
+
+// ==================== Toast ====================
+let toastTimer;
+function copyMobileUrl() {
+  const url = 'https://cdf6429aeb3bdbc7-39-182-27-232.serveousercontent.com/swim-dashboard.html';
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('链接已复制，发送到手机即可打开', 'success');
+  }).catch(() => {
+    prompt('复制链接：', url);
+  });
+}
+
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  clearTimeout(toastTimer);
+  el.textContent = msg; el.className = `toast ${type||''} show`;
+  toastTimer = setTimeout(() => { el.className = 'toast'; }, 2500);
+}
+
+// ==================== Tab Switching ====================
+document.getElementById('tabBar').addEventListener('click', function(e) {
+  if (e.target.classList.contains('tab')) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    const panelId = e.target.dataset.panel;
+    document.getElementById(panelId).classList.add('active');
+    if (panelId === 'panel-records') renderRecords();
+    if (panelId === 'panel-swimmers') renderSwimmers();
+    if (panelId === 'panel-compare') { populateCompareSelects(); renderCompare(); }
+  }
+});
+
+// ==================== Swimmer Management ====================
+function addSwimmer() {
+  const name = document.getElementById('swimmerName').value.trim();
+  const gender = document.getElementById('swimmerGender').value;
+  const ageGroup = document.getElementById('swimmerAgeGroup').value;
+  if (!name) { showToast('请输入运动员姓名', 'warn'); return; }
+  if (data.swimmers.some(s => s.name === name && s.gender === gender)) { showToast('该运动员已存在', 'warn'); return; }
+  data.swimmers.push({ id: nextSwimmerId++, name, gender, ageGroup, createdAt: new Date().toISOString() });
+  saveData(data);
+  document.getElementById('swimmerName').value = '';
+  populateSwimmerSelects();
+  populateCompareSelects();
+  renderSwimmers();
+  showToast(`运动员「${name}」已添加`, 'success');
+}
+
+function deleteSwimmer(id) {
+  const swimmer = getSwimmer(id); if (!swimmer) return;
+  const hasRecords = data.records.some(r => r.swimmerId === id);
+  if (hasRecords) {
+    if (!confirm(`运动员「${swimmer.name}」有 ${data.records.filter(r => r.swimmerId === id).length} 条成绩记录，删除后相关记录也会删除。确定删除吗？`)) return;
+    data.records = data.records.filter(r => r.swimmerId !== id);
+  } else { if (!confirm(`确定删除运动员「${swimmer.name}」吗？`)) return; }
+  data.swimmers = data.swimmers.filter(s => s.id !== id);
+  saveData(data);
+  populateSwimmerSelects(); populateCompareSelects();
+  renderSwimmers(); renderRecords();
+  showToast(`运动员「${swimmer.name}」已删除`, 'success');
+}
+
+function populateSwimmerSelects() {
+  ['recordSwimmer', 'filterSwimmer'].forEach(selId => {
+    const sel = document.getElementById(selId); if (!sel) return;
+    const cv = sel.value;
+    sel.innerHTML = selId === 'filterSwimmer' ? '<option value="">全部运动员</option>' : '<option value="">-- 请选择 --</option>';
+    data.swimmers.forEach(s => { sel.innerHTML += `<option value="${s.id}">${s.name} (${getGenderLabel(s.gender)} · ${s.ageGroup})</option>`; });
+    sel.value = cv;
+  });
+}
+
+function populateCompareSelects() {
+  const sel = document.getElementById('compareSwimmer'); if (!sel) return;
+  const cv = sel.value;
+  sel.innerHTML = '<option value="">-- 请选择运动员 --</option>';
+  data.swimmers.forEach(s => { sel.innerHTML += `<option value="${s.id}">${s.name} (${getGenderLabel(s.gender)} · ${s.ageGroup})</option>`; });
+  sel.value = cv;
+}
+
+// ==================== Record Management ====================
+function addRecord() {
+  const swimmerId = parseInt(document.getElementById('recordSwimmer').value);
+  const stroke = document.getElementById('recordStroke').value;
+  const distance = document.getElementById('recordDistance').value;
+  const timeStr = document.getElementById('recordTime').value.trim();
+  const date = document.getElementById('recordDate').value;
+  const note = document.getElementById('recordNote').value.trim();
+
+  if (!swimmerId) { showToast('请选择运动员', 'warn'); return; }
+  if (!timeStr) { showToast('请输入成绩', 'warn'); return; }
+  const timeSec = timeToSeconds(timeStr);
+  if (isNaN(timeSec) || timeSec <= 0) { showToast('成绩格式错误，请输入如 1:23.45 或 58.32', 'warn'); return; }
+
+  data.records.push({
+    id: nextRecordId++, swimmerId, stroke, distance,
+    timeSec, timeDisplay: formatTime(timeSec),
+    date: date || new Date().toISOString().split('T')[0],
+    note, createdAt: new Date().toISOString()
+  });
+
+  data.records.sort((a, b) => { if (a.date !== b.date) return b.date.localeCompare(a.date); return b.id - a.id; });
+  saveData(data);
+
+  document.getElementById('recordTime').value = '';
+  document.getElementById('recordNote').value = '';
+  const swimmer = getSwimmer(swimmerId);
+  showToast(`「${swimmer.name}」${getStrokeLabel(stroke)} ${distance} 成绩已录入`, 'success');
+  renderRecords();
+}
+
+function deleteRecord(id) {
+  if (!confirm('确定删除这条成绩记录吗？')) return;
+  data.records = data.records.filter(r => r.id !== id);
+  saveData(data);
+  renderRecords();
+  showToast('成绩记录已删除', 'success');
+}
+
+// ==================== Render Records ====================
+function renderRecords() {
+  const fs = document.getElementById('filterSwimmer')?.value;
+  const fk = document.getElementById('filterStroke')?.value;
+  const fd = document.getElementById('filterDistance')?.value;
+
+  let records = [...data.records];
+  if (fs) records = records.filter(r => r.swimmerId === parseInt(fs));
+  if (fk) records = records.filter(r => r.stroke === fk);
+  if (fd) records = records.filter(r => r.distance === fd);
+
+  const uniqueSwimmers = new Set(records.map(r => r.swimmerId)).size;
+  document.getElementById('summaryStats').innerHTML = `
+    <div class="stat-card"><div class="number">${records.length}</div><div class="label">当前筛选记录</div></div>
+    <div class="stat-card"><div class="number">${uniqueSwimmers}</div><div class="label">活跃运动员</div></div>
+    <div class="stat-card"><div class="number">${data.swimmers.length}</div><div class="label">注册运动员</div></div>
+    <div class="stat-card"><div class="number">${data.records.length}</div><div class="label">累计总记录</div></div>
+  `;
+
+  const tbody = document.getElementById('recordsBody');
+  if (records.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="icon">🏊‍♂️</div><p>暂无匹配的成绩记录</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = records.map(r => {
+    const s = getSwimmer(r.swimmerId); if (!s) return '';
+    const pb = getSwimmerPB(r.swimmerId, r.stroke, r.distance);
+    const isPB = pb && pb.id === r.id;
+    return `<tr>
+      <td><strong>${s.name}</strong> ${s.gender==='male'?'<span class="tag tag-male">男</span>':'<span class="tag tag-female">女</span>'}</td>
+      <td><span class="tag ${getStrokeClass(r.stroke)}">${getStrokeLabel(r.stroke)}</span></td>
+      <td>${r.distance}</td>
+      <td class="time-cell${isPB?' best-time':''}">${r.timeDisplay}${isPB?' 🏅':''}</td>
+      <td>${r.date}</td>
+      <td style="font-size:13px;color:var(--text-muted)">${r.note||'-'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteRecord(${r.id})">删除</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function getSwimmerPB(swimmerId, stroke, distance) {
+  const records = data.records.filter(r => r.swimmerId===swimmerId && r.stroke===stroke && r.distance===distance);
+  if (!records.length) return null;
+  return records.reduce((b, r) => r.timeSec < b.timeSec ? r : b, records[0]);
+}
+
+// ==================== Render Swimmers ====================
+function renderSwimmers() {
+  const grid = document.getElementById('swimmerGrid');
+  if (data.swimmers.length === 0) {
+    grid.innerHTML = `<div class="empty-state"><div class="icon">👤</div><p>还没有添加运动员</p></div>`; return;
+  }
+  grid.innerHTML = data.swimmers.map(s => {
+    const my = data.records.filter(r => r.swimmerId === s.id);
+    const best = my.length ? my.reduce((b,r) => r.timeSec < b.timeSec ? r : b, my[0]) : null;
+    const events = new Set(my.map(r => `${r.stroke}-${r.distance}`));
+    return `<div class="swimmer-card">
+      <div class="name">${s.name}</div>
+      <div class="meta"><span class="tag tag-${s.gender}">${getGenderLabel(s.gender)}</span><span style="margin-left:6px;">${s.ageGroup}</span></div>
+      <div class="stats">
+        <div><div class="stat-val">${my.length}</div><div style="font-size:12px;color:var(--text-muted)">总记录</div></div>
+        <div><div class="stat-val">${events.size}</div><div style="font-size:12px;color:var(--text-muted)">参赛项目</div></div>
+        ${best?`<div><div class="stat-val" style="font-size:14px">${best.timeDisplay}</div><div style="font-size:12px;color:var(--text-muted)">最佳成绩</div></div>`:''}
+      </div>
+      <div class="actions"><button class="btn btn-danger btn-sm" onclick="deleteSwimmer(${s.id})">删除</button></div>
+    </div>`;
+  }).join('');
+  populateSwimmerSelects();
+  populateCompareSelects();
+}
+
+// ==================== Render Compare ====================
+function renderCompare() {
+  const swimmerId = parseInt(document.getElementById('compareSwimmer').value);
+  const filterStroke = document.getElementById('compareStroke').value;
+  const container = document.getElementById('compareContent');
+
+  if (!swimmerId) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">📊</div><p>请选择运动员查看成绩对比</p></div>`; return;
+  }
+
+  const s = getSwimmer(swimmerId); if (!s) return;
+  let records = data.records.filter(r => r.swimmerId === swimmerId);
+  if (filterStroke) records = records.filter(r => r.stroke === filterStroke);
+
+  // Group by stroke+distance
+  const groups = {};
+  records.forEach(r => {
+    const key = `${getStrokeLabel(r.stroke)} ${r.distance}`;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(r);
+  });
+
+  // Sort each group by date asc
+  Object.values(groups).forEach(g => g.sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id));
+
+  const groupKeys = Object.keys(groups).sort();
+
+  // Overall improvement stats
+  let totalImproved = 0, totalRegressed = 0, totalSame = 0;
+  const improvements = [];
+
+  Object.entries(groups).forEach(([key, group]) => {
+    for (let i = 1; i < group.length; i++) {
+      const prev = group[i-1], curr = group[i];
+      if (curr.timeSec < prev.timeSec) { totalImproved++; improvements.push({key, delta: prev.timeSec - curr.timeSec}); }
+      else if (curr.timeSec > prev.timeSec) totalRegressed++;
+      else totalSame++;
+    }
+  });
+
+  let html = `<div class="compare-swimmer-card">
+    <h4>${s.name} <span class="tag tag-${s.gender}">${getGenderLabel(s.gender)}</span> ${s.ageGroup}</h4>
+    <div class="summary-row" style="margin-top:12px;">
+      <div class="summary-item"><div class="val">${records.length}</div><div class="lbl">总记录数</div></div>
+      <div class="summary-item"><div class="val">${groupKeys.length}</div><div class="lbl">参赛项目</div></div>
+      <div class="summary-item"><div class="val">${totalImproved}</div><div class="lbl">进步次数</div></div>
+      <div class="summary-item"><div class="val">${totalRegressed}</div><div class="lbl">退步次数</div></div>
+      <div class="summary-item"><div class="val">${improvements.length > 0 ? formatTime(Math.max(...improvements.map(i=>i.delta))) : '-'}</div><div class="lbl">最大进步幅度</div></div>
+    </div>
+  </div>`;
+
+  if (groupKeys.length === 0) {
+    html += `<div class="empty-state"><div class="icon">📊</div><p>该运动员暂无成绩记录</p></div>`;
+  } else {
+    groupKeys.forEach(key => {
+      const group = groups[key];
+      const pb = group.reduce((b, r) => r.timeSec < b.timeSec ? r : b, group[0]);
+
+      html += `<div class="compare-group">
+        <h5>🏊 ${key}</h5>`;
+
+      group.forEach((r, i) => {
+        const isPB = r.id === pb.id;
+        let deltaHtml = '';
+
+        if (i === 0) {
+          deltaHtml = '<div class="delta-col delta-same" style="min-width:120px;">首次记录</div>';
+        } else {
+          const prev = group[i-1];
+          const diff = r.timeSec - prev.timeSec;
+          if (diff < 0) {
+            deltaHtml = `<div class="delta-col delta-improve">⬇ 快了 ${formatTime(Math.abs(diff))}</div>`;
+          } else if (diff > 0) {
+            deltaHtml = `<div class="delta-col delta-regress">⬆ 慢了 ${formatTime(diff)}</div>`;
+          } else {
+            deltaHtml = '<div class="delta-col delta-same">持平</div>';
+          }
+        }
+
+        // Progress bar (percentage of PB)
+        const bestTime = pb.timeSec;
+        const pct = bestTime > 0 ? Math.min(100, (bestTime / r.timeSec) * 100) : 100;
+
+        html += `<div class="compare-row">
+          <div class="date-col">${r.date}</div>
+          <div class="time-col${isPB?' best-time':''}">${r.timeDisplay}${isPB?' 🏅':''}</div>
+          ${deltaHtml}
+          <div class="improve-bar"><div class="fill" style="width:${pct}%"></div></div>
+          <span style="font-size:11px;color:var(--text-muted)">${Math.round(pct)}%</span>
+          ${r.note ? `<span style="font-size:12px;color:var(--text-muted)">${r.note}</span>` : ''}
+        </div>`;
+      });
+
+      html += `</div>`;
+    });
+  }
+
+  container.innerHTML = html;
+}
+
+// ==================== Init ====================
+function init() {
+  document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
+  populateSwimmerSelects();
+  populateCompareSelects();
+  renderRecords();
+  renderSwimmers();
+}
+
+init();
+</script>
+
+</body>
+</html>
